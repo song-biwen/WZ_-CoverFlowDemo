@@ -8,6 +8,7 @@
 
 #import "WZMainController.h"
 #import "WZCoverFlowLayout.h"
+#import "WZCollectionViewCell.h"
 
 #define ScreenWidth [UIScreen mainScreen].bounds.size.width
 #define OrginalY 50
@@ -45,57 +46,32 @@ static CGFloat ImageViewTag = 100;
 
 - (UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath {
     
-    UIImage *balloon = [UIImage imageNamed:[NSString stringWithFormat:@"%zd",indexPath.row % 3]];
+    WZCollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:cellIdentifier forIndexPath:indexPath];
+    UIImageView *imageView = [cell.contentView viewWithTag:ImageViewTag];
+    if (imageView == nil) {
+        imageView = [[UIImageView alloc] initWithFrame:cell.contentView.bounds];
+        imageView.tag = ImageViewTag;
+        [cell.contentView addSubview:imageView];
+    }
+    imageView.image = [UIImage imageNamed:[NSString stringWithFormat:@"%zd",indexPath.row % 3]];
     
-    UICollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:cellIdentifier forIndexPath:indexPath];
+    CAReplicatorLayer *layer = (CAReplicatorLayer *)cell.layer;
+    layer.instanceCount = 2;
     
-    [[cell.contentView layer] setBackgroundColor:[[UIColor blackColor] CGColor]];                 //改一下图片名就行了
+    // 先Y轴偏移
+    CATransform3D transform =  CATransform3DMakeTranslation(0, cell.bounds.size.height, 0);
     
-    CALayer *topLayer = [[CALayer alloc] init];
+    // 在旋转
+    transform = CATransform3DRotate(transform, M_PI, 1, 0, 0);
     
-    CGRect frame = cell.contentView.bounds;
-    [topLayer setBounds:frame];
-    [topLayer setPosition:CGPointMake(frame.size.width * 0.5,frame.size.height * 0.5)];
+    // 设置复制层的形变
+    layer.instanceTransform = transform;
     
-    [topLayer setContents:(id)[balloon CGImage]];
-    
-    [[cell.contentView layer] addSublayer:topLayer];
-    
-    CALayer *reflectionLayer = [[CALayer alloc] init];
-    
-    CGRect frame2 = cell.contentView.bounds;
-    frame2.size.height += 80;
-    [reflectionLayer setBounds:frame2];
-    
-    [reflectionLayer setPosition:CGPointMake(frame.size.width * 0.5,frame.size.height * 1.5)];
-    
-    [reflectionLayer setContents:[topLayer contents]];
-    
-    [reflectionLayer setValue:[NSNumber numberWithFloat:180.0] forKeyPath:@"transform.rotation.x"];
-    
-    CAGradientLayer *gradientLayer = [[CAGradientLayer alloc] init];
-    
-    [gradientLayer setBounds:[reflectionLayer bounds]];
-    
-    [gradientLayer setPosition:CGPointMake([reflectionLayer bounds].size.width/2, [reflectionLayer bounds].size.height/2)];
-    
-    [gradientLayer setColors:[NSArray arrayWithObjects: (id)[[UIColor clearColor] CGColor],(id)[[UIColor blackColor] CGColor], nil]];
-    
-    [gradientLayer setStartPoint:CGPointMake(0.1,0.1)];
-    
-    [gradientLayer setEndPoint:CGPointMake(0.5,1.0)];
-    
-    [reflectionLayer setMask:gradientLayer];
-//
-    [[cell.contentView layer] addSublayer:reflectionLayer];
-    
-//    UIImageView *imageView = [cell.contentView viewWithTag:ImageViewTag];
-//    if (imageView == nil) {
-//        imageView = [[UIImageView alloc] initWithFrame:cell.contentView.bounds];
-//        imageView.tag = ImageViewTag;
-//        [cell.contentView addSubview:imageView];
-//    }
-//    imageView.image = [UIImage imageNamed:[NSString stringWithFormat:@"%zd",indexPath.row % 3]];
+    // 设置颜色通道偏移量，相等上一个一点偏移量，就是阴影效果
+    layer.instanceRedOffset = -0.1;//红色偏移量
+    layer.instanceBlueOffset = -0.1;//蓝色
+    layer.instanceGreenOffset = -0.1;//绿色
+    layer.instanceAlphaOffset = -0.7;//透明度偏移量
     return cell;
     
 }
@@ -112,11 +88,12 @@ static CGFloat ImageViewTag = 100;
         _collectionView = [[UICollectionView alloc] initWithFrame:CGRectMake(0, OrginalY, ScreenWidth, CollecionViewHeight) collectionViewLayout:layout];
         _collectionView.dataSource = self;
         //注册cell
-        [_collectionView registerClass:[UICollectionViewCell class] forCellWithReuseIdentifier:cellIdentifier];
+        [_collectionView registerClass:[WZCollectionViewCell class] forCellWithReuseIdentifier:cellIdentifier];
         
         [self.view addSubview:_collectionView];
     }
     return _collectionView;
 }
+
 
 @end
