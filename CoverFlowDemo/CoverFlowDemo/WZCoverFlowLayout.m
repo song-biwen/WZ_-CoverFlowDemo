@@ -20,6 +20,8 @@
         CGFloat distance = ABS(attr.center.x - centerX);
         CGFloat scale = 1/ (1 + distance * 0.005) ;
         attr.transform = CGAffineTransformMakeScale(scale, scale);
+        
+//        attr.transform = CGAffineTransformMakeRotation(M_PI * scale);
     }
     return arr;
 }
